@@ -6,6 +6,7 @@ namespace Platformer.Mechanics
 {
     /// <summary>
     /// Marks a trigger as a VictoryZone, usually used to end the current game level.
+    /// Sends stats to Redis on level completion.
     /// </summary>
     public class VictoryZone : MonoBehaviour
     {
@@ -13,35 +14,43 @@ namespace Platformer.Mechanics
         [Tooltip("Drag your RedisManager GameObject here")]
         public RedisManager redisManager;
 
+        [Header("Player Settings")]
+        [Tooltip("Player name saved in PlayerPrefs")]
+        public string playerPrefsKey = "PlayerName";
+
         void OnTriggerEnter2D(Collider2D collider)
         {
-            var p = collider.gameObject.GetComponent<PlayerController>();
-            if (p != null)
+            var player = collider.gameObject.GetComponent<PlayerController>();
+            if (player != null)
             {
-                // --- REDIS SAVING LOGIC START ---
+                // ===========================
+                // 1️⃣ Collect stats
+                // ===========================
+                LevelStats stats = new LevelStats
+                {
+                    playerName = PlayerPrefs.GetString(playerPrefsKey, "Unknown"),
+                    score = GameStats.CalculateScore(),
+                    kills = GameStats.Kills,
+                    gems = GameStats.Gems,
+                    timePlayed = Time.timeSinceLevelLoad
+                };
+
+                // ===========================
+                // 2️⃣ Send to Redis
+                // ===========================
                 if (redisManager != null)
                 {
-                    // 1. Collect your stats
-                    // Note: You need to replace the '0's below with the actual variables 
-                    // from your GameManager, PlayerController, or TokenController.
-                    LevelStats stats = new LevelStats();
-                    
-                    stats.playerName = PlayerPrefs.GetString("PlayerName", "Unknown");
-                    stats.timeElapsed = Time.timeSinceLevelLoad; // Current level time
-                    stats.percentage = 100f; // They finished, so 100%
-                    stats.gems = GameStats.Gems;
-                    stats.kills = GameStats.Kills;
-
-                    // 2. Send to Redis
                     redisManager.SaveStats(stats);
+                    Debug.Log($"Stats sent to Redis: {stats.playerName} | Score: {stats.score}");
                 }
                 else
                 {
                     Debug.LogWarning("RedisManager is not assigned in the VictoryZone Inspector!");
                 }
-                // --- REDIS SAVING LOGIC END ---
 
-                // Execute the original game winning logic
+                // ===========================
+                // 3️⃣ Execute original victory logic
+                // ===========================
                 var ev = Schedule<PlayerEnteredVictoryZone>();
                 ev.victoryZone = this;
             }

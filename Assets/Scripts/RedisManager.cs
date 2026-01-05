@@ -4,44 +4,55 @@ using System.Collections;
 
 public class RedisManager : MonoBehaviour
 {
-    // The address of your Webdis/Redis server
-    private string baseUrl = "http://localhost:7379"; 
+    // Webdis (PAS Redis direct)
+    public string baseUrl = "http://localhost:7379";
 
+    // =========================
+    // SAVE STATS (JSON)
+    // =========================
     public void SaveStats(LevelStats stats)
     {
         StartCoroutine(SaveStatsRoutine(stats));
+        AddScoreToLeaderboard(stats.playerName, stats.score);
     }
 
     private IEnumerator SaveStatsRoutine(LevelStats stats)
     {
-        // 1. Convert the C# object to a JSON string
-        // Result looks like: {"playerName":"Player1","kills":5...}
         string json = JsonUtility.ToJson(stats);
-
-        // 2. Prepare the Key and Value
-        // Key: We use "stats:" + name (e.g., stats:Player1)
         string key = "stats:" + stats.playerName;
-
-        // 3. Construct the URL for Webdis
-        // Format: http://localhost:7379/SET/key/value
-        // IMPORTANT: We must "Escape" the JSON string so symbols like "{" don't break the URL
         string url = $"{baseUrl}/SET/{key}/{UnityWebRequest.EscapeURL(json)}";
 
-        // 4. Send the Request
-        using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
-            // Wait for it to finish
-            yield return webRequest.SendWebRequest();
+            yield return request.SendWebRequest();
 
-            if (webRequest.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError("Redis Error: " + webRequest.error);
-            }
+            if (request.result != UnityWebRequest.Result.Success)
+                Debug.LogError(request.error);
             else
-            {
-                Debug.Log("Success! Stats saved to Redis.");
-                Debug.Log("Server Response: " + webRequest.downloadHandler.text);
-            }
+                Debug.Log("Stats sauvegardées !");
+        }
+    }
+
+    // =========================
+    // LEADERBOARD
+    // =========================
+    public void AddScoreToLeaderboard(string playerName, int score)
+    {
+        StartCoroutine(AddScoreRoutine(playerName, score));
+    }
+
+    private IEnumerator AddScoreRoutine(string playerName, int score)
+    {
+        string url = $"{baseUrl}/ZADD/leaderboard/{score}/{playerName}";
+
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+                Debug.LogError(request.error);
+            else
+                Debug.Log("Score ajouté au leaderboard !");
         }
     }
 }

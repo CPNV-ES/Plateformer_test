@@ -1,11 +1,11 @@
 using System;
 
-[Serializable] // This allows Unity to turn it into JSON
+[Serializable]
 public class LevelStats
 {
     public string playerName;
-    public float timeElapsed;
+    public int score;
     public int kills;
     public int gems;
-    public float percentage;
+    public float timePlayed;
 }

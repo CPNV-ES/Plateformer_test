@@ -1,14 +1,10 @@
 using Platformer.Core;
 using Platformer.Mechanics;
 using Platformer.Model;
+using UnityEngine;
 
 namespace Platformer.Gameplay
 {
-
-    /// <summary>
-    /// This event is triggered when the player character enters a trigger with a VictoryZone component.
-    /// </summary>
-    /// <typeparam name="PlayerEnteredVictoryZone"></typeparam>
     public class PlayerEnteredVictoryZone : Simulation.Event<PlayerEnteredVictoryZone>
     {
         public VictoryZone victoryZone;
@@ -17,8 +13,21 @@ namespace Platformer.Gameplay
 
         public override void Execute()
         {
+            // Animation victoire
             model.player.animator.SetTrigger("victory");
             model.player.controlEnabled = false;
+
+            // 🔥 ENVOI DES STATS
+            StatsExporter statsExporter = Object.FindFirstObjectByType<StatsExporter>();
+
+            if (statsExporter != null)
+            {
+                statsExporter.OnLevelFinished();
+            }
+            else
+            {
+                Debug.LogError("StatsExporter introuvable dans la scène !");
+            }
         }
     }
 }
