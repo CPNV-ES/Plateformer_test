@@ -35,7 +35,8 @@ public class VictoryUI : MonoBehaviour
         if (finalTimeText != null && timer != null)
             finalTimeText.text = $"Temps : {timer.FinalTime:0.0}s";
 
-
+        // Pause le jeu
+        Time.timeScale = 0f;
     }
 
     public void HideVictory()
