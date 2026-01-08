@@ -32,7 +32,7 @@ public class GameTimer : MonoBehaviour
 
         // Mise à jour du texte
         if (timerText != null)
-            timerText.text = "Temps : " + currentTime.ToString("0.0") + "s";
+            timerText.text = "Timer : " + currentTime.ToString("0.0") + "s";
     }
 
     public float FinalTime => currentTime; // pour VictoryUI et VictoryZone
